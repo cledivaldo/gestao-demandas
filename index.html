@@ -106,13 +106,13 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--s2)}
     </div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;flex-direction:column;gap:4px">
-        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Usuário (admin)</label>
+        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Usuário</label>
         <input id="login-user" type="text" placeholder="seu usuário" autocomplete="username"
           style="font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;border:1px solid #e0ddd4;border-radius:6px;background:#f5f4f0;color:#1a1916;outline:none"
           onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
       </div>
       <div style="display:flex;flex-direction:column;gap:4px">
-        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Senha (admin)</label>
+        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Senha</label>
         <input id="login-pass" type="password" placeholder="sua senha" autocomplete="current-password"
           style="font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;border:1px solid #e0ddd4;border-radius:6px;background:#f5f4f0;color:#1a1916;outline:none"
           onkeydown="if(event.key==='Enter')doLogin()">
@@ -326,49 +326,18 @@ async function loadAll() {
     riscos       = Array.isArray(data.riscos)       ? data.riscos       : [];
     responsaveis = Array.isArray(data.responsaveis) ? data.responsaveis : [];
     historico    = Array.isArray(data.historico)    ? data.historico    : [];
-    showSyncStatus('ok');
-  } catch(e) {
-    showSyncStatus('erro', e.message);
-    const cached = localStorage.getItem('dl_fallback');
-    if (cached) {
-      const fb = JSON.parse(cached);
-      atividades = fb.atividades||[]; demandas = fb.demandas||[];
-      riscos = fb.riscos||[]; responsaveis = fb.responsaveis||[]; historico = fb.historico||[];
-      toast('⚠ Modo offline: exibindo cache local');
-    } else {
-      atividades   = JSON.parse(JSON.stringify(DEFAULT_DATA.atividades));
-      demandas     = JSON.parse(JSON.stringify(DEFAULT_DATA.demandas));
-      riscos       = JSON.parse(JSON.stringify(DEFAULT_DATA.riscos));
-      responsaveis = JSON.parse(JSON.stringify(DEFAULT_DATA.responsaveis));
-      historico    = JSON.parse(JSON.stringify(DEFAULT_DATA.historico));
-      toast('⚠ Modo offline: exibindo dados padrão');
-    }
-  }
-  renderAll();
-}
-    });
-    if (r.status === 404) {
-      // Arquivo não existe ainda — usa defaults e cria
+    // Se bin vazio, carrega dados padrão e salva
+    if (atividades.length === 0 && demandas.length === 0) {
       atividades   = JSON.parse(JSON.stringify(DEFAULT_DATA.atividades));
       demandas     = JSON.parse(JSON.stringify(DEFAULT_DATA.demandas));
       riscos       = JSON.parse(JSON.stringify(DEFAULT_DATA.riscos));
       responsaveis = JSON.parse(JSON.stringify(DEFAULT_DATA.responsaveis));
       historico    = JSON.parse(JSON.stringify(DEFAULT_DATA.historico));
       await saveAll();
-      showSyncStatus('ok', 'Banco criado no GitHub');
-      renderAll(); return;
+      showSyncStatus('ok', 'Dados padrão carregados');
+    } else {
+      showSyncStatus('ok');
     }
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const meta = await r.json();
-    _fileSha = meta.sha; // guarda SHA para update posterior
-    const content = atob(meta.content.replace(/\n/g, ''));
-    const data = JSON.parse(content);
-    atividades   = Array.isArray(data.atividades)   ? data.atividades   : [];
-    demandas     = Array.isArray(data.demandas)     ? data.demandas     : [];
-    riscos       = Array.isArray(data.riscos)       ? data.riscos       : [];
-    responsaveis = Array.isArray(data.responsaveis) ? data.responsaveis : [];
-    historico    = Array.isArray(data.historico)    ? data.historico    : [];
-    showSyncStatus('ok');
   } catch(e) {
     showSyncStatus('erro', e.message);
     const cached = localStorage.getItem('dl_fallback');
@@ -388,7 +357,6 @@ async function loadAll() {
   }
   renderAll();
 }
-
 // ── SAVE ──────────────────────────────────────────────────────────────────────
 async function saveAll() {
   if (_saving) { _pendingSave = true; return; }
@@ -1141,8 +1109,8 @@ setInterval(async () => {
 // ── CREDENCIAIS DE ACESSO ─────────────────────────────────────────────────────
 // Adicione quantos usuários quiser neste formato: { user: 'nome', pass: 'senha' }
 const USUARIOS = [
-  { user: 'cledivaldo', pass: '1234' },
-  { user: 'admin',      pass: 'admin' },
+  { user: 'cledivaldo', pass: 'sc@2024' },
+  { user: 'admin',      pass: 'demandas@sc' },
 ];
 
 const SESSION_KEY = 'dl_auth_ok';
@@ -1164,12 +1132,9 @@ function doLogin() {
 }
 
 function checkSession() {
-  if (sessionStorage.getItem(SESSION_KEY) === '1') {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'grid';
-    loadAll();
-  }
-  // Se não tiver sessão, mostra login e NÃO chama loadAll()
+  // Limpa qualquer sessão residual para garantir login sempre
+  sessionStorage.removeItem(SESSION_KEY);
+  // Mostra login — loadAll() só é chamado após doLogin() com sucesso
 }
 
 checkSession();

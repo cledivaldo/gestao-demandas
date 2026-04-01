@@ -267,54 +267,11 @@ let _pendingSave = false;
 
 // Dados padrão
 const DEFAULT_DATA = {
-  atividades: [
-    {id:'D01.1',demanda:'CSC no App',ativ:'Análise do código fonte para melhorias e levantamento de funcionalidades',resp:'',status:'Em andamento',pri:'Média',risco:'Médio',prazo:'',obs:'Escopo amplo; requer detalhamento'},
-    {id:'D02.1',demanda:'IGA',ativ:'Finalização da integração com o backend LightPlus',resp:'',status:'Em andamento',pri:'Alta',risco:'Alto',prazo:'',obs:'CRÍTICA: Bloqueada por OnPremisse'},
-    {id:'D03.1',demanda:'Bloqueio de usuários',ativ:'Criação de ambiente de servidores OnPremisse para segurança',resp:'',status:'Backlog',pri:'Alta',risco:'Alto',prazo:'',obs:'Infraestrutura crítica'},
-    {id:'D03.2',demanda:'Bloqueio de usuários',ativ:'Criação de aplicação para unificação de serviços de segurança',resp:'',status:'Backlog',pri:'Alta',risco:'Alto',prazo:'',obs:'Depende de ambiente OnPremisse'},
-    {id:'D04.1',demanda:'Blindagem RH',ativ:'Entendimento do ambiente de drivers da Light para implementação das regras',resp:'',status:'Backlog',pri:'Média',risco:'Médio',prazo:'',obs:'Fase de discovery técnico'},
-    {id:'D05.1',demanda:'Suporte Light Plus',ativ:'Atuação em Tickets abertos para o CSC',resp:'',status:'Em andamento',pri:'Alta',risco:'Médio',prazo:'',obs:'Atividade de sustentação contínua'},
-    {id:'D05.2',demanda:'Suporte Light Plus',ativ:'Investigação de problema no envio de email para gestor Danilo',resp:'',status:'Backlog',pri:'Alta',risco:'Médio',prazo:'',obs:'Incidente específico'},
-    {id:'D05.3',demanda:'Suporte Light Plus',ativ:'Investigação de problema em produção',resp:'',status:'Backlog',pri:'Alta',risco:'Alto',prazo:'',obs:'URGENTE: Escopo genérico; detalhar'},
-    {id:'D05.4',demanda:'Suporte Light Plus',ativ:'Participação em CMUDs',resp:'',status:'Backlog',pri:'Média',risco:'Baixo',prazo:'',obs:'Rotina de gestão de mudanças'},
-    {id:'D06.1',demanda:'Jogo de Cultura',ativ:'Subida em produção',resp:'',status:'Backlog',pri:'Média',risco:'Baixo',prazo:'',obs:'Requer plano de rollback'},
-    {id:'D07.1',demanda:'Gente RH Atestado',ativ:'Investigação de problema de não envio de anexos dos atestados',resp:'',status:'Backlog',pri:'Alta',risco:'Médio',prazo:'',obs:'Incidente impactando RH'},
-    {id:'D07.2',demanda:'Gente RH Atestado',ativ:'Validação das funcionalidades',resp:'',status:'Backlog',pri:'Média',risco:'Médio',prazo:'',obs:'Depende de correção de anexos'},
-    {id:'D07.3',demanda:'Gente CIPA',ativ:'Votação',resp:'',status:'Em andamento',pri:'Média',risco:'Médio',prazo:'',obs:'Em andamento'},
-    {id:'D08.1',demanda:'Light Plus OnPremisse',ativ:'Previsão de disponibilização dos servidores',resp:'Lucas Alves Pinheiro',status:'Bloqueado',pri:'Alta',risco:'Alto',prazo:'27/03/2026',obs:'NOK – Prazo vencido'},
-    {id:'D09.1',demanda:'GenteRH – Ponto',ativ:'Ajustes solicitados pelo Randal',resp:'',status:'Backlog',pri:'Alta',risco:'Médio',prazo:'27/03/2026',obs:'Prazo vencido; URGENTE'},
-    {id:'D10.1',demanda:'Gestão de Acesso',ativ:'Atualizar status de todas as tasks no Jira',resp:'Álvaro, Cledivaldo, Cadu, Leo',status:'Backlog',pri:'Alta',risco:'Alto',prazo:'30/03/2026',obs:'Imediata – Risco de Auditoria'},
-  ],
-  demandas: [
-    {id:'D01',nome:'CSC no App',resp:'',status:'Em andamento',pri:'Média',desc:'Análise e melhorias da aplicação CSC'},
-    {id:'D02',nome:'IGA',resp:'',status:'Em andamento',pri:'Alta',desc:'Integração com backend LightPlus'},
-    {id:'D03',nome:'Bloqueio de usuários',resp:'',status:'Backlog',pri:'Alta',desc:'Ambiente e aplicação de segurança'},
-    {id:'D04',nome:'Blindagem RH',resp:'',status:'Backlog',pri:'Média',desc:'Implementação de regras de drivers'},
-    {id:'D05',nome:'Suporte Light Plus',resp:'',status:'Em andamento',pri:'Alta',desc:'Sustentação e incidentes LightPlus'},
-    {id:'D06',nome:'Jogo de Cultura',resp:'',status:'Backlog',pri:'Média',desc:'Subida em produção do jogo'},
-    {id:'D07',nome:'Gente RH Atestado',resp:'',status:'Backlog',pri:'Alta',desc:'Correção de envio de atestados'},
-    {id:'D08',nome:'Light Plus OnPremisse',resp:'Lucas Alves Pinheiro',status:'Bloqueado',pri:'Alta',desc:'Disponibilização de servidores'},
-    {id:'D09',nome:'GenteRH – Ponto',resp:'',status:'Backlog',pri:'Alta',desc:'Ajustes de ponto solicitados'},
-    {id:'D10',nome:'Gestão de Acesso',resp:'Álvaro, Cledivaldo, Cadu, Leo',status:'Backlog',pri:'Alta',desc:'Atualização de tasks no Jira'},
-  ],
-  riscos: [
-    {id:'R01',demanda:'Light Plus OnPremisse',titulo:'Prazo não cumprido – OnPremisse (27/03)',tipo:'Bloqueador',sev:'critico',mit:'Escalar; definir novo ETA; comunicar impacto'},
-    {id:'R02',demanda:'IGA',titulo:'IGA bloqueada por D08.1',tipo:'Dependência',sev:'critico',mit:'Aguardar desbloqueio de D08.1'},
-    {id:'R03',demanda:'Geral',titulo:'94% das atividades sem responsável',tipo:'Governança',sev:'critico',mit:'Designar responsáveis em até 24h'},
-    {id:'R04',demanda:'Geral',titulo:'82% das atividades sem prazo definido',tipo:'Planejamento',sev:'critico',mit:'Estimar prazos em 48h'},
-    {id:'R05',demanda:'Suporte Light Plus',titulo:'Escopo vago em investigação de problema',tipo:'Escopo',sev:'alto',mit:'Detalhar o problema específico'},
-  ],
-  responsaveis: [
-    {nome:'Lucas Alves Pinheiro',papel:'Responsável técnico',email:''},
-    {nome:'Álvaro',papel:'Equipe Gestão de Acesso',email:''},
-    {nome:'Cledivaldo',papel:'Equipe Gestão de Acesso',email:''},
-    {nome:'Cadu',papel:'Equipe Gestão de Acesso',email:''},
-    {nome:'Leo',papel:'Equipe Gestão de Acesso',email:''},
-  ],
-  historico: [
-    {data:'30/03/2026',versao:'1.0',desc:'Criação inicial do framework de gestão',autor:'Cledivaldo'},
-    {data:'01/04/2026',versao:'3.0',desc:'Migração para GitHub API — sem Azure, sem SharePoint auth',autor:'sistema'},
-  ]
+  atividades: [],
+  demandas: [],
+  riscos: [],
+  responsaveis: [],
+  historico: []
 };
 
 let atividades = [], demandas = [], riscos = [], responsaveis = [], historico = [];
@@ -333,18 +290,11 @@ async function loadAll() {
     riscos       = Array.isArray(data.riscos)       ? data.riscos       : [];
     responsaveis = Array.isArray(data.responsaveis) ? data.responsaveis : [];
     historico    = Array.isArray(data.historico)    ? data.historico    : [];
-    // Se bin vazio, carrega dados padrão e salva
-    if (atividades.length === 0 && demandas.length === 0) {
-      atividades   = JSON.parse(JSON.stringify(DEFAULT_DATA.atividades));
-      demandas     = JSON.parse(JSON.stringify(DEFAULT_DATA.demandas));
-      riscos       = JSON.parse(JSON.stringify(DEFAULT_DATA.riscos));
-      responsaveis = JSON.parse(JSON.stringify(DEFAULT_DATA.responsaveis));
-      historico    = JSON.parse(JSON.stringify(DEFAULT_DATA.historico));
-      await saveAll();
-      showSyncStatus('ok', 'Dados padrão carregados');
-    } else {
-      showSyncStatus('ok');
-    }
+    // Ordena por ID ao carregar (garante ordenação inicial correta)
+    atividades.sort((a,b) => naturalCompare(a.id||'', b.id||''));
+    demandas.sort((a,b)   => naturalCompare(a.id||'', b.id||''));
+    riscos.sort((a,b)     => naturalCompare(a.id||'', b.id||''));
+    showSyncStatus('ok');
   } catch(e) {
     showSyncStatus('erro', e.message);
     const cached = localStorage.getItem('dl_fallback');
@@ -354,14 +304,10 @@ async function loadAll() {
       riscos = fb.riscos||[]; responsaveis = fb.responsaveis||[]; historico = fb.historico||[];
       toast('⚠ Modo offline: exibindo cache local');
     } else {
-      atividades   = JSON.parse(JSON.stringify(DEFAULT_DATA.atividades));
-      demandas     = JSON.parse(JSON.stringify(DEFAULT_DATA.demandas));
-      riscos       = JSON.parse(JSON.stringify(DEFAULT_DATA.riscos));
-      responsaveis = JSON.parse(JSON.stringify(DEFAULT_DATA.responsaveis));
-      historico    = JSON.parse(JSON.stringify(DEFAULT_DATA.historico));
-      toast('⚠ Modo offline: exibindo dados padrão');
+      toast('⚠ Modo offline: sem dados em cache.');
     }
   }
+  hideLoading();
   renderAll();
 }
 // ── SAVE ──────────────────────────────────────────────────────────────────────
@@ -558,7 +504,27 @@ document.getElementById('impJsonInput').addEventListener('change', function(e) {
 });
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
-const sortState = { ativ: {col:-1, dir:1}, dem: {col:-1, dir:1} };
+const sortState = { ativ: {col:0, dir:1}, dem: {col:0, dir:1} };
+
+// Ordenação alfanumérica natural
+function naturalCompare(a, b) {
+  const ax = [], bx = [];
+  String(a).replace(/(\d+)|(\D+)/g, (_,d,s) => ax.push(d ? [0,parseInt(d,10)] : [1,s.toLowerCase()]));
+  String(b).replace(/(\d+)|(\D+)/g, (_,d,s) => bx.push(d ? [0,parseInt(d,10)] : [1,s.toLowerCase()]));
+  for (let i = 0; i < Math.max(ax.length, bx.length); i++) {
+    if (!ax[i]) return -1;
+    if (!bx[i]) return 1;
+    if (ax[i][0] !== bx[i][0]) return ax[i][0] - bx[i][0];
+    if (ax[i][1] < bx[i][1]) return -1;
+    if (ax[i][1] > bx[i][1]) return 1;
+  }
+  return 0;
+}
+
+// Aplica ordenação natural por ID em qualquer array
+function sortById(arr, key) {
+  return arr.slice().sort((a, b) => naturalCompare(a[key]||'', b[key]||''));
+}
 const ativKeys  = ['id','demanda','ativ','resp','status','pri','risco','prazo','obs'];
 const demKeys   = ['id','nome','resp','status','pri','desc'];
 
@@ -568,10 +534,7 @@ function sortTbl(type, col) {
   const keys = type === 'ativ' ? ativKeys : demKeys;
   const arr  = type === 'ativ' ? atividades : demandas;
   const key  = keys[col];
-  arr.sort((a,b) => {
-    const av = (a[key]||'').toLowerCase(), bv = (b[key]||'').toLowerCase();
-    return av < bv ? -st.dir : av > bv ? st.dir : 0;
-  });
+  arr.sort((a,b) => naturalCompare(a[key]||'', b[key]||'') * st.dir);
   const tbl = document.getElementById(`tbl-${type}`);
   tbl.querySelectorAll('th').forEach((th,i) => {
     th.classList.remove('sort-asc','sort-desc');
@@ -620,7 +583,7 @@ function renderDash(){
         <div style="height:100%;width:${tot?Math.round(v/tot*100):0}%;background:${c};border-radius:4px"></div></div>
       <div style="font-family:var(--mono);font-size:11px;color:var(--txt2);width:24px">${v}</div>
     </div>`).join('');
-  const blocked=atividades.filter(a=>a.status==='Bloqueado');
+  const blocked=atividades.slice().sort((a,b)=>naturalCompare(a.id||'',b.id||'')).filter(a=>a.status==='Bloqueado');
   document.getElementById('dash-blq').innerHTML=blocked.length?`
     <div class="tw"><table><colgroup><col style="width:70px"><col style="width:140px"><col><col style="width:130px"><col style="width:120px"></colgroup>
     <thead><tr><th>ID</th><th>Demanda</th><th>Atividade</th><th>Responsável</th><th>Observações</th></tr></thead>
@@ -632,13 +595,17 @@ function renderDash(){
 // ── ATIVIDADES ────────────────────────────────────────────────────────────────
 function renderAtiv(){
   const q=(gv('s-q')||'').toLowerCase(),st=gv('s-st'),pr=gv('s-pr'),ri=gv('s-ri');
-  const filtered=atividades.filter(a=>{
+  // Garante ordenação por ID antes de filtrar
+  const sorted = sortState.ativ.col === 0
+    ? atividades.slice().sort((a,b) => naturalCompare(a.id||'', b.id||'') * sortState.ativ.dir)
+    : atividades.slice().sort((a,b) => naturalCompare(a[ativKeys[sortState.ativ.col]]||'', b[ativKeys[sortState.ativ.col]]||'') * sortState.ativ.dir);
+  const filtered=sorted.filter(a=>{
     if(st&&a.status!==st)return false;if(pr&&a.pri!==pr)return false;if(ri&&a.risco!==ri)return false;
     if(q&&!a.id.toLowerCase().includes(q)&&!a.demanda.toLowerCase().includes(q)&&!a.ativ.toLowerCase().includes(q)&&!(a.resp||'').toLowerCase().includes(q))return false;
     return true;
   });
   document.getElementById('tbody-ativ').innerHTML=filtered.map(a=>{
-    const i=atividades.indexOf(a);
+    const i=atividades.indexOf(a); // índice no array original para editar/deletar corretamente
     return `<tr>
       <td class="cid">${a.id}</td><td style="font-size:11px;font-weight:600">${a.demanda}</td>
       <td class="csm">${a.ativ}</td>
@@ -656,7 +623,10 @@ function renderAtiv(){
 // ── DEMANDAS ──────────────────────────────────────────────────────────────────
 function renderDem(){
   const q=(gv('d-q')||'').toLowerCase();
-  const filtered=demandas.filter(d=>!q||d.nome.toLowerCase().includes(q)||d.id.toLowerCase().includes(q));
+  const sorted = sortState.dem.col === 0
+    ? demandas.slice().sort((a,b) => naturalCompare(a.id||'', b.id||'') * sortState.dem.dir)
+    : demandas.slice().sort((a,b) => naturalCompare(a[demKeys[sortState.dem.col]]||'', b[demKeys[sortState.dem.col]]||'') * sortState.dem.dir);
+  const filtered=sorted.filter(d=>!q||d.nome.toLowerCase().includes(q)||d.id.toLowerCase().includes(q));
   document.getElementById('tbody-dem').innerHTML=filtered.map(d=>{
     const i=demandas.indexOf(d);
     return `<tr>
@@ -673,7 +643,8 @@ function renderDem(){
 // ── RISCOS ────────────────────────────────────────────────────────────────────
 function renderRiscos(){
   const q=(gv('r-q')||'').toLowerCase();
-  const filtered=riscos.filter(r=>!q||r.titulo.toLowerCase().includes(q)||r.id.toLowerCase().includes(q));
+  const sortedRiscos=riscos.slice().sort((a,b)=>naturalCompare(a.id||'',b.id||''));
+  const filtered=sortedRiscos.filter(r=>!q||r.titulo.toLowerCase().includes(q)||r.id.toLowerCase().includes(q));
   document.getElementById('risk-cards').innerHTML=filtered.length?filtered.map(r=>{
     const i=riscos.indexOf(r);
     const sevLbl=r.sev==='critico'?'Crítico':r.sev==='alto'?'Alto':'Médio';
@@ -702,7 +673,16 @@ function renderHist(){
     :'<div class="empty">Sem registros</div>';
 }
 
-function renderAll(){renderDash();renderAtiv();renderDem();renderRiscos();renderResp();renderHist();}
+function applyHeaderSort(type) {
+  const tbl = document.getElementById('tbl-' + type);
+  if (!tbl) return;
+  const st = sortState[type];
+  tbl.querySelectorAll('th').forEach((th,i) => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (i === st.col) th.classList.add(st.dir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+}
+function renderAll(){renderDash();renderAtiv();renderDem();renderRiscos();renderResp();renderHist();applyHeaderSort('ativ');applyHeaderSort('dem');}
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
 function del(type,idx){
@@ -770,15 +750,15 @@ function saveModal(){
   if(type==='ativ'){
     const o={id:gv('f-id'),demanda:gv('f-dem'),ativ:gv('f-ativ'),resp:gv('f-resp'),status:gv('f-status'),pri:gv('f-pri'),risco:gv('f-risco'),prazo:gv('f-prazo'),obs:gv('f-obs')};
     if(!o.ativ){alert('Informe a descrição.');return;}
-    if(isE)atividades[idx]=o;else atividades.push(o);addHist((isE?'Editada: ':'Nova atividade: ')+o.id);
+    if(isE)atividades[idx]=o;else atividades.push(o);atividades.sort((a,b)=>naturalCompare(a.id||'',b.id||''));addHist((isE?'Editada: ':'Nova atividade: ')+o.id);
   } else if(type==='dem'){
     const o={id:gv('f-id'),nome:gv('f-nome'),resp:gv('f-resp'),status:gv('f-status'),pri:gv('f-pri'),desc:gv('f-desc')};
     if(!o.nome){alert('Informe o nome.');return;}
-    if(isE)demandas[idx]=o;else demandas.push(o);addHist((isE?'Demanda editada: ':'Nova demanda: ')+o.nome);
+    if(isE)demandas[idx]=o;else demandas.push(o);demandas.sort((a,b)=>naturalCompare(a.id||'',b.id||''));addHist((isE?'Demanda editada: ':'Nova demanda: ')+o.nome);
   } else if(type==='risco'){
     const o={id:gv('f-id'),demanda:gv('f-dem'),titulo:gv('f-titulo'),tipo:gv('f-tipo'),sev:gv('f-sev'),mit:gv('f-mit')};
     if(!o.titulo){alert('Informe a descrição.');return;}
-    if(isE)riscos[idx]=o;else riscos.push(o);addHist((isE?'Risco editado: ':'Novo risco: ')+o.id);
+    if(isE)riscos[idx]=o;else riscos.push(o);riscos.sort((a,b)=>naturalCompare(a.id||'',b.id||''));addHist((isE?'Risco editado: ':'Novo risco: ')+o.id);
   } else if(type==='resp'){
     const o={nome:gv('f-nome'),papel:gv('f-papel'),email:gv('f-email')};
     if(!o.nome){alert('Informe o nome.');return;}
@@ -1147,6 +1127,7 @@ function doLogin() {
     sessionStorage.setItem(SESSION_KEY, '1');
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'grid';
+    showLoading('Sincronizando dados...');
     loadAll();
   } else {
     document.getElementById('login-err').style.display = 'block';

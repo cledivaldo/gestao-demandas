@@ -97,7 +97,38 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--s2)}
 </style>
 </head>
 <body>
-<div class="app">
+
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#1a1916;font-family:'Syne',sans-serif">
+  <div style="background:#fff;border-radius:12px;padding:2.5rem 2rem;width:100%;max-width:360px">
+    <div style="margin-bottom:1.75rem;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:#1a1916;letter-spacing:-.3px">Demandas <span style="color:#f5c842">Light</span></div>
+      <div style="font-size:12px;color:#6b6960;margin-top:4px">Acesso restrito — SC Soluções</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Usuário (admin)</label>
+        <input id="login-user" type="text" placeholder="seu usuário" autocomplete="username"
+          style="font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;border:1px solid #e0ddd4;border-radius:6px;background:#f5f4f0;color:#1a1916;outline:none"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Senha (admin)</label>
+        <input id="login-pass" type="password" placeholder="sua senha" autocomplete="current-password"
+          style="font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;border:1px solid #e0ddd4;border-radius:6px;background:#f5f4f0;color:#1a1916;outline:none"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div id="login-err" style="display:none;font-size:12px;color:#9b2226;background:#fcdcdd;border-radius:6px;padding:7px 10px;text-align:center">
+        Usuário ou senha incorretos.
+      </div>
+      <button onclick="doLogin()"
+        style="margin-top:6px;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;padding:10px;border-radius:6px;background:#1a1916;color:#fff;border:none;cursor:pointer">
+        Entrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
   <header class="topbar">
     <div class="logo">Demandas <span>Light</span> <span style="font-size:10px;font-weight:400;opacity:.5;margin-left:4px">v1.3</span></div>
     <div class="top-btns">
@@ -220,7 +251,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--s2)}
 // ┌─────────────────────────────────────────────────────────────────────────┐
 // │  CONFIGURAÇÃO — preencha as 2 linhas abaixo                             │
 // └─────────────────────────────────────────────────────────────────────────┘
-const GH_TOKEN = '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';   // ← GitHub Personal Access Token
+const GH_TOKEN = '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';   // ← GitHub Personal Access Token
 const GH_REPO  = 'cledivaldo/gestao-demandas'; // ← já preenchido
 const GH_FILE  = 'dados.json';                  // ← nome do arquivo de dados
 const GH_API   = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_FILE;
@@ -1119,7 +1150,48 @@ setInterval(async () => {
   } catch(e) {}
 }, 30000);
 
-loadAll(); // async — carrega do SharePoint e depois chama renderAll()
+// loadAll() é chamado após login bem-sucedido (ver script de auth acima)
 </script>
+</div><!-- fim #main-app -->
+
+<script>
+// ── CREDENCIAIS DE ACESSO ─────────────────────────────────────────────────────
+// Adicione quantos usuários quiser neste formato: { user: 'nome', pass: 'senha' }
+const USUARIOS = [
+  { user: 'cledivaldo', pass: '1234' },
+  { user: 'admin',      pass: 'admin' },
+];
+
+const SESSION_KEY = 'dl_auth_ok';
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim().toLowerCase();
+  const p = document.getElementById('login-pass').value;
+  const ok = USUARIOS.some(x => x.user.toLowerCase() === u && x.pass === p);
+  if (ok) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'grid';
+    loadAll();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+  }
+}
+
+function checkSession() {
+  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'grid';
+    loadAll();
+  }
+  // Se não tiver sessão, mostra login e NÃO chama loadAll()
+}
+
+checkSession();
+</script>
+
+
 </body>
 </html>

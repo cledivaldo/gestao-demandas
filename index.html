@@ -384,11 +384,59 @@ async function syncNow() {
 }
 
 async function resetData() {
-  if (!confirm('Isso vai APAGAR todos os dados para TODOS os usuários. Continuar?')) return;
+  if (!confirm('Isso vai APAGAR todos os dados para TODOS os usuários do grupo, inclusive o banco de dados no GitHub. Continuar?')) return;
+  if (!confirm('Tem certeza? Esta ação não pode ser desfeita.')) return;
+
+  showSyncStatus('salvando', 'Apagando banco de dados...');
+
+  // Zera estado em memória
   atividades=[]; demandas=[]; riscos=[]; responsaveis=[]; historico=[];
   localStorage.removeItem('dl_fallback');
-  await saveAll(); renderAll();
-  toast('Todos os dados foram apagados.');
+
+  // Grava JSON vazio diretamente no GitHub (não usa saveAll para ter controle total)
+  try {
+    const emptyPayload = JSON.stringify({
+      atividades:[], demandas:[], riscos:[], responsaveis:[], historico:[],
+      _savedAt: new Date().toISOString(), _version: '3.0', _reset: true
+    });
+    const encoded = btoa(unescape(encodeURIComponent(emptyPayload)));
+
+    // Busca SHA atual do arquivo (necessário para sobrescrever)
+    let sha = _fileSha;
+    if (!sha) {
+      const check = await fetch(GH_API, {
+        headers: { 'Authorization': 'token ' + GH_TOKEN, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (check.ok) { const meta = await check.json(); sha = meta.sha; }
+    }
+
+    const body = { message: 'reset: dados apagados em ' + new Date().toISOString(), content: encoded };
+    if (sha) body.sha = sha;
+
+    const r = await fetch(GH_API, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + GH_TOKEN,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!r.ok) {
+      const err = await r.json();
+      throw new Error(err.message || 'HTTP ' + r.status);
+    }
+    const result = await r.json();
+    _fileSha = result.content.sha;
+    showSyncStatus('ok');
+    renderAll();
+    toast('✓ Todos os dados apagados — banco limpo no GitHub.');
+  } catch(e) {
+    showSyncStatus('erro', e.message);
+    toast('✕ Erro ao apagar no GitHub: ' + e.message);
+    renderAll();
+  }
 }
 
 function showSyncStatus(state, detail) {

@@ -107,7 +107,9 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--s2)}
       <input type="file" id="impJsonInput" accept=".json">
       <button class="tbtn gold" onclick="exportXlsx()">Exportar xlsx</button>
       <button class="tbtn" onclick="exportJson()">Exportar JSON</button>
-      <button class="tbtn" onclick="resetData()" style="color:#ff6b6b;border-color:rgba(255,107,107,.4)" title="Apaga todos os dados">⟲ Limpar tudo</button>
+      <button class="tbtn" onclick="syncNow()" title="Recarregar dados do SharePoint">⟳ Sincronizar</button>
+      <span id="sync-indicator" class="sync-badge" style="transition:all .3s">⟳ Carregando...</span>
+      <button class="tbtn" onclick="resetData()" style="color:#ff6b6b;border-color:rgba(255,107,107,.4)" title="Apaga todos os dados para todos">⟲ Limpar tudo</button>
     </div>
   </header>
 
@@ -211,18 +213,23 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--s2)}
 
 <script>
 // ══════════════════════════════════════════════════════════════════════════════
-// PERSISTÊNCIA: localStorage + JSON web + Deduplicação
+// PERSISTÊNCIA: GitHub API — dados salvos no repositório como JSON
+// Sem Azure, sem SharePoint auth, sem CORS. Funciona de qualquer domínio.
 // ══════════════════════════════════════════════════════════════════════════════
 
-const STORAGE_KEYS = {
-  atividades: 'dl_atividades',
-  demandas: 'dl_demandas',
-  riscos: 'dl_riscos',
-  responsaveis: 'dl_responsaveis',
-  historico: 'dl_historico'
-};
+// ┌─────────────────────────────────────────────────────────────────────────┐
+// │  CONFIGURAÇÃO — preencha as 2 linhas abaixo                             │
+// └─────────────────────────────────────────────────────────────────────────┘
+const GH_TOKEN = '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';   // ← GitHub Personal Access Token
+const GH_REPO  = 'cledivaldo/gestao-demandas'; // ← já preenchido
+const GH_FILE  = 'dados.json';                  // ← nome do arquivo de dados
+const GH_API   = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_FILE;
 
-// Dados padrão (fallback)
+let _saving = false;
+let _pendingSave = false;
+let _fileSha = null; // SHA do arquivo atual (necessário para atualizar no GitHub)
+
+// Dados padrão
 const DEFAULT_DATA = {
   atividades: [
     {id:'D01.1',demanda:'CSC no App',ativ:'Análise do código fonte para melhorias e levantamento de funcionalidades',resp:'',status:'Em andamento',pri:'Média',risco:'Médio',prazo:'',obs:'Escopo amplo; requer detalhamento'},
@@ -270,54 +277,129 @@ const DEFAULT_DATA = {
   ],
   historico: [
     {data:'30/03/2026',versao:'1.0',desc:'Criação inicial do framework de gestão',autor:'Cledivaldo'},
-    {data:'31/03/2026',versao:'1.1',desc:'Gerenciador interativo + exportação xlsx fiel ao original',autor:'Cledivaldo'},
-    {data:'31/03/2026',versao:'1.2',desc:'Persistência localStorage + JSON web + deduplicação',autor:'sistema'},
-    {data:'31/03/2026',versao:'1.3',desc:'Correção export xlsx (bordas+cores completas), reset apaga tudo, melhorias de interface',autor:'sistema'},
+    {data:'01/04/2026',versao:'3.0',desc:'Migração para GitHub API — sem Azure, sem SharePoint auth',autor:'sistema'},
   ]
 };
 
-// Variáveis de estado
-let atividades = [];
-let demandas = [];
-let riscos = [];
-let responsaveis = [];
-let historico = [];
+let atividades = [], demandas = [], riscos = [], responsaveis = [], historico = [];
 
-// ── FUNÇÕES DE PERSISTÊNCIA ───────────────────────────────────────────────────
-
-function saveAll() {
-  localStorage.setItem(STORAGE_KEYS.atividades, JSON.stringify(atividades));
-  localStorage.setItem(STORAGE_KEYS.demandas, JSON.stringify(demandas));
-  localStorage.setItem(STORAGE_KEYS.riscos, JSON.stringify(riscos));
-  localStorage.setItem(STORAGE_KEYS.responsaveis, JSON.stringify(responsaveis));
-  localStorage.setItem(STORAGE_KEYS.historico, JSON.stringify(historico));
-}
-
-function loadAll() {
-  const a = localStorage.getItem(STORAGE_KEYS.atividades);
-  const d = localStorage.getItem(STORAGE_KEYS.demandas);
-  const r = localStorage.getItem(STORAGE_KEYS.riscos);
-  const p = localStorage.getItem(STORAGE_KEYS.responsaveis);
-  const h = localStorage.getItem(STORAGE_KEYS.historico);
-
-  atividades = a ? JSON.parse(a) : JSON.parse(JSON.stringify(DEFAULT_DATA.atividades));
-  demandas = d ? JSON.parse(d) : JSON.parse(JSON.stringify(DEFAULT_DATA.demandas));
-  riscos = r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_DATA.riscos));
-  responsaveis = p ? JSON.parse(p) : JSON.parse(JSON.stringify(DEFAULT_DATA.responsaveis));
-  historico = h ? JSON.parse(h) : JSON.parse(JSON.stringify(DEFAULT_DATA.historico));
-}
-
-function resetData() {
-  if (!confirm('Isso vai APAGAR todos os dados (atividades, demandas, riscos, responsáveis e histórico). Continuar?')) return;
-  atividades = [];
-  demandas = [];
-  riscos = [];
-  responsaveis = [];
-  historico = [];
-  Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
-  saveAll();
+// ── LOAD ──────────────────────────────────────────────────────────────────────
+async function loadAll() {
+  showSyncStatus('carregando');
+  try {
+    const r = await fetch(GH_API + '?t=' + Date.now(), {
+      headers: {
+        'Authorization': 'token ' + GH_TOKEN,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    if (r.status === 404) {
+      // Arquivo não existe ainda — usa defaults e cria
+      atividades   = JSON.parse(JSON.stringify(DEFAULT_DATA.atividades));
+      demandas     = JSON.parse(JSON.stringify(DEFAULT_DATA.demandas));
+      riscos       = JSON.parse(JSON.stringify(DEFAULT_DATA.riscos));
+      responsaveis = JSON.parse(JSON.stringify(DEFAULT_DATA.responsaveis));
+      historico    = JSON.parse(JSON.stringify(DEFAULT_DATA.historico));
+      await saveAll();
+      showSyncStatus('ok', 'Banco criado no GitHub');
+      renderAll(); return;
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const meta = await r.json();
+    _fileSha = meta.sha; // guarda SHA para update posterior
+    const content = atob(meta.content.replace(/\n/g, ''));
+    const data = JSON.parse(content);
+    atividades   = Array.isArray(data.atividades)   ? data.atividades   : [];
+    demandas     = Array.isArray(data.demandas)     ? data.demandas     : [];
+    riscos       = Array.isArray(data.riscos)       ? data.riscos       : [];
+    responsaveis = Array.isArray(data.responsaveis) ? data.responsaveis : [];
+    historico    = Array.isArray(data.historico)    ? data.historico    : [];
+    showSyncStatus('ok');
+  } catch(e) {
+    showSyncStatus('erro', e.message);
+    const cached = localStorage.getItem('dl_fallback');
+    if (cached) {
+      const fb = JSON.parse(cached);
+      atividades = fb.atividades||[]; demandas = fb.demandas||[];
+      riscos = fb.riscos||[]; responsaveis = fb.responsaveis||[]; historico = fb.historico||[];
+      toast('⚠ Modo offline: exibindo cache local');
+    } else {
+      atividades   = JSON.parse(JSON.stringify(DEFAULT_DATA.atividades));
+      demandas     = JSON.parse(JSON.stringify(DEFAULT_DATA.demandas));
+      riscos       = JSON.parse(JSON.stringify(DEFAULT_DATA.riscos));
+      responsaveis = JSON.parse(JSON.stringify(DEFAULT_DATA.responsaveis));
+      historico    = JSON.parse(JSON.stringify(DEFAULT_DATA.historico));
+      toast('⚠ Modo offline: exibindo dados padrão');
+    }
+  }
   renderAll();
+}
+
+// ── SAVE ──────────────────────────────────────────────────────────────────────
+async function saveAll() {
+  if (_saving) { _pendingSave = true; return; }
+  _saving = true;
+  showSyncStatus('salvando');
+  try {
+    const payload = JSON.stringify({
+      atividades, demandas, riscos, responsaveis, historico,
+      _savedAt: new Date().toISOString(), _version: '3.0'
+    }, null, 0);
+    const encoded = btoa(unescape(encodeURIComponent(payload)));
+    const body = {
+      message: 'update: ' + new Date().toISOString(),
+      content: encoded,
+      ...(  _fileSha ? { sha: _fileSha } : {} )
+    };
+    const r = await fetch(GH_API, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + GH_TOKEN,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      const err = await r.json();
+      throw new Error(err.message || 'HTTP ' + r.status);
+    }
+    const result = await r.json();
+    _fileSha = result.content.sha; // atualiza SHA para próximo save
+    localStorage.setItem('dl_fallback', JSON.stringify({atividades,demandas,riscos,responsaveis,historico}));
+    showSyncStatus('ok');
+  } catch(e) {
+    showSyncStatus('erro', e.message);
+    localStorage.setItem('dl_fallback', JSON.stringify({atividades,demandas,riscos,responsaveis,historico}));
+    toast('⚠ Erro ao salvar no GitHub. Dados salvos localmente.');
+  } finally {
+    _saving = false;
+    if (_pendingSave) { _pendingSave = false; saveAll(); }
+  }
+}
+
+async function syncNow() {
+  await loadAll();
+  toast('Dados sincronizados com o GitHub!');
+}
+
+async function resetData() {
+  if (!confirm('Isso vai APAGAR todos os dados para TODOS os usuários. Continuar?')) return;
+  atividades=[]; demandas=[]; riscos=[]; responsaveis=[]; historico=[];
+  localStorage.removeItem('dl_fallback');
+  await saveAll(); renderAll();
   toast('Todos os dados foram apagados.');
+}
+
+function showSyncStatus(state, detail) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  const labels = {carregando:'⟳ Carregando...',salvando:'⟳ Salvando...',ok:'✓ Sincronizado',erro:'✕ Erro de sync'};
+  const colors = {carregando:'#2952a3',salvando:'#92580a',ok:'#2d6a4f',erro:'#9b2226'};
+  const bgs    = {carregando:'#dce6f5',salvando:'#fdeec8',ok:'#d8eedf',erro:'#fcdcdd'};
+  el.textContent = labels[state] + (detail ? ' — ' + detail : '');
+  el.style.color = colors[state];
+  el.style.background = bgs[state];
 }
 
 // ── DEDUPLICAÇÃO ──────────────────────────────────────────────────────────────
@@ -967,9 +1049,29 @@ document.getElementById('impInput').addEventListener('change',function(e){
 
 document.getElementById('mbg').addEventListener('click',function(e){if(e.target===this)closeModal()});
 
-// ── INICIALIZAÇÃO ─────────────────────────────────────────────────────────────
-loadAll();
-renderAll();
+// Sync automático a cada 30 segundos
+setInterval(async () => {
+  if (_saving) return;
+  try {
+    const r = await fetch(GH_API + "?t=" + Date.now(), { headers: { "Authorization": "token " + GH_TOKEN, "Accept": "application/vnd.github.v3+json" } });
+    if (!r.ok) return;
+    const meta = await r.json();
+    if (meta.sha === _fileSha) return; // sem mudança
+    _fileSha = meta.sha;
+    const content = atob(meta.content.replace(/\n/g, ""));
+    const data = JSON.parse(content);
+    if (!document.getElementById("mbg").classList.contains("open")) {
+      atividades = Array.isArray(data.atividades) ? data.atividades : atividades;
+      demandas = Array.isArray(data.demandas) ? data.demandas : demandas;
+      riscos = Array.isArray(data.riscos) ? data.riscos : riscos;
+      responsaveis = Array.isArray(data.responsaveis) ? data.responsaveis : responsaveis;
+      historico = Array.isArray(data.historico) ? data.historico : historico;
+      renderAll();
+    }
+  } catch(e) {}
+}, 30000);
+
+loadAll(); // async — carrega do SharePoint e depois chama renderAll()
 </script>
 </body>
 </html>

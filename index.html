@@ -94,6 +94,13 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--s2)}
 .empty{text-align:center;padding:3rem;color:var(--txt3);font-size:13px}
 #impInput,#impJsonInput{display:none}
 .sync-badge{font-size:10px;padding:2px 8px;border-radius:3px;background:var(--bl);color:var(--blue);font-weight:600}
+
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:center;justify-content:center}
+.loading-overlay.show{display:flex}
+.loading-box{background:var(--surface);border-radius:var(--rl2);padding:2rem 2.5rem;display:flex;flex-direction:column;align-items:center;gap:1rem;min-width:200px}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--brd);border-top:3px solid var(--txt);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-msg{font-size:13px;font-weight:500;color:var(--txt2)}
 </style>
 </head>
 <body>
@@ -106,14 +113,14 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--s2)}
     </div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;flex-direction:column;gap:4px">
-        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Usuário (admin)</label>
-        <input id="login-user" type="text" placeholder="seu usuário" autocomplete="username"
+        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Usuário <span style="font-weight:400;text-transform:none;opacity:.6">(admin)</span></label>
+        <input id="login-user" type="text" placeholder="admin" autocomplete="username"
           style="font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;border:1px solid #e0ddd4;border-radius:6px;background:#f5f4f0;color:#1a1916;outline:none"
           onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
       </div>
       <div style="display:flex;flex-direction:column;gap:4px">
-        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Senha (admin)</label>
-        <input id="login-pass" type="password" placeholder="sua senha" autocomplete="current-password"
+        <label style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a09d94">Senha <span style="font-weight:400;text-transform:none;opacity:.6">(admin)</span></label>
+        <input id="login-pass" type="password" placeholder="admin" autocomplete="current-password"
           style="font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;border:1px solid #e0ddd4;border-radius:6px;background:#f5f4f0;color:#1a1916;outline:none"
           onkeydown="if(event.key==='Enter')doLogin()">
       </div>
@@ -139,7 +146,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--s2)}
       <button class="tbtn gold" onclick="exportXlsx()">Exportar xlsx</button>
       <button class="tbtn" onclick="exportJson()">Exportar JSON</button>
       <button class="tbtn" onclick="syncNow()" title="Recarregar dados do SharePoint">⟳ Sincronizar</button>
-      <span id="sync-indicator" class="sync-badge" style="transition:all .3s">⟳ Carregando...</span>
+      <span id="sync-indicator" class="sync-badge" style="transition:all .3s;display:none"></span>
       <button class="tbtn" onclick="resetData()" style="color:#ff6b6b;border-color:rgba(255,107,107,.4)" title="Apaga todos os dados para todos">⟲ Limpar tudo</button>
     </div>
   </header>
@@ -362,6 +369,7 @@ async function saveAll() {
   if (_saving) { _pendingSave = true; return; }
   _saving = true;
   showSyncStatus('salvando');
+  showLoading('Salvando dados...');
   try {
     const payload = { atividades, demandas, riscos, responsaveis, historico, _savedAt: new Date().toISOString() };
     const r = await fetch(JB_API, {
@@ -384,13 +392,16 @@ async function saveAll() {
     toast('⚠ Erro ao salvar. Dados salvos localmente.');
   } finally {
     _saving = false;
+    hideLoading();
     if (_pendingSave) { _pendingSave = false; saveAll(); }
   }
 }
 
 async function syncNow() {
+  showLoading('Sincronizando...');
   await loadAll();
-  toast('Dados sincronizados com o GitHub!');
+  hideLoading();
+  toast('Dados sincronizados!');
 }
 
 async function resetData() {
@@ -398,6 +409,7 @@ async function resetData() {
   if (!confirm('Tem certeza? Esta ação não pode ser desfeita.')) return;
 
   showSyncStatus('salvando', 'Apagando banco de dados...');
+  showLoading('Apagando todos os dados...');
 
   // Zera estado em memória
   atividades=[]; demandas=[]; riscos=[]; responsaveis=[]; historico=[];
@@ -416,15 +428,25 @@ async function resetData() {
       throw new Error(err.message || 'HTTP ' + r.status);
     }
     showSyncStatus('ok');
+    hideLoading();
     renderAll();
     toast('✓ Todos os dados apagados — banco limpo no JSONBin.');
   } catch(e) {
     showSyncStatus('erro', e.message);
+    hideLoading();
     toast('✕ Erro ao apagar: ' + e.message);
     renderAll();
   }
 }
 
+
+function showLoading(msg) {
+  document.getElementById('loading-msg').textContent = msg || 'Aguarde...';
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
+}
 function showSyncStatus(state, detail) {
   const el = document.getElementById('sync-indicator');
   if (!el) return;
@@ -434,6 +456,7 @@ function showSyncStatus(state, detail) {
   el.textContent = labels[state] + (detail ? ' — ' + detail : '');
   el.style.color = colors[state];
   el.style.background = bgs[state];
+  el.style.display = 'inline-block';
 }
 
 // ── DEDUPLICAÇÃO ──────────────────────────────────────────────────────────────
@@ -1086,6 +1109,7 @@ document.getElementById('mbg').addEventListener('click',function(e){if(e.target=
 // Sync automático a cada 30 segundos
 setInterval(async () => {
   if (_saving) return;
+  if (sessionStorage.getItem('dl_auth_ok') !== '1') return; // não sincroniza antes do login
   try {
     const r = await fetch(JB_API + '/latest', { headers: { 'X-Master-Key': JB_KEY, 'X-Bin-Meta': 'false' } });
     if (!r.ok) return;
@@ -1140,6 +1164,8 @@ function checkSession() {
 checkSession();
 </script>
 
+
+<div class="loading-overlay" id="loading-overlay"><div class="loading-box"><div class="loading-spinner"></div><div class="loading-msg" id="loading-msg">Aguarde...</div></div></div>
 
 </body>
 </html>
